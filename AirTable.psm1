@@ -30,11 +30,11 @@ Function Get-AirTableRecords
 
     If ($Filter)
     {
-        Write-Host -ForegroundColor Cyan "Get-USPIAirTableRecords: Using $Filter as filter."
+        Write-Verbose "Get-USPIAirTableRecords: Using $Filter as filter."
     }
     Else
     {
-        Write-Host -ForegroundColor Cyan "Get-USPIAirTableRecords: No filter provided, querying entire table."
+        Write-Verbose "Get-USPIAirTableRecords: No filter provided, querying entire table."
     }
 
     $Records = @()
@@ -47,7 +47,7 @@ Function Get-AirTableRecords
         {
             If ($Response.StatusCode -eq 200)
             {
-                Write-Host -ForegroundColor Green "Page received."
+                Write-Verbose "Page received."
 
                 $Content = ($Response.content | ConvertFrom-Json)
                 
@@ -61,33 +61,33 @@ Function Get-AirTableRecords
                 }
                 Else
                 {
-                    Write-Host "No data received"
+                    Write-Verbose "No data received"
                 }
             }
             Else
             {
-                Write-Host -ForegroundColor Yellow "HTTP Status [$($Response.StatusDescription)]"
+                Write-Verbose "HTTP Status [$($Response.StatusDescription)]"
                 
                 Break
             }
         }
         Else
         {
-            Write-Host -ForegroundColor Yellow "Response was empty"
+            Write-Verbose "Response was empty"
         }
 
         If ($Content.offset)
         {
             $Response = $null
-            Write-Host -ForegroundColor Cyan "Retrieving next page: offset $($Content.offset)"
+            Write-Verbose "Retrieving next page: offset $($Content.offset)"
             $Response = iwr -Method Get -Uri ("$AirTableURI/$AirTableBaseKey/$Table" + "?offset=$($Content.offset)") -Headers $AirTableHeaders
                     
         }
     } Until (!$Content.offset)
             
-    Write-Host -ForegroundColor Green "Get-USPIAirTableRecords: Query complete."
+    Write-Verbose "Get-USPIAirTableRecords: Query complete."
     
-    Write-Host -ForegroundColor Gray "$($Records.count) records found."
+    Write-Verbose "$($Records.count) records found."
 
     Return $Records
 }

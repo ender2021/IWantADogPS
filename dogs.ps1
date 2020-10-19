@@ -1,5 +1,8 @@
-Import-Module .\AirTable.psm1
-. .\keys.ps1
+$oldPref = $VerbosePreference
+$VerbosePreference = "SilentlyContinue"
+
+Import-Module $PSScriptRoot\AirTable.psm1
+. $PSScriptRoot\keys.ps1
 
 #api key param = $airTableKey
 #base key param = $dogsBaseKey
@@ -15,10 +18,18 @@ $currentIds = $animals.uniqueId
 #get logged data from airtable
 Set-AirTableAuth $airTableKey
 $records = Get-AirTableRecords $dogsBaseKey $tableName
-$loggedIds = $records.fields.uniqueId
+if ($records.count -gt 0) {
+    $loggedIds = $records.fields.uniqueId
+} else {
+    $loggedIds = @()
+}
 
 #check to see if there are any new dogs, and push them to airtable if so
-$newIds = (Compare-Object -ReferenceObject $loggedIds -DifferenceObject ($currentIds) | Where-Object{$_.sideIndicator -eq "=>"}).InputObject
+if ($loggedIds.length -gt 0) {
+    $newIds = (Compare-Object -ReferenceObject $loggedIds -DifferenceObject ($currentIds) | Where-Object{$_.sideIndicator -eq "=>"}).InputObject
+} else {
+    $newIds = $currentIds
+}
 if ($newIds.Count -gt 0) {
     foreach($id in $newIds) {
         $pup = $animals | Where-Object { $_.uniqueId -eq $id }
@@ -28,3 +39,5 @@ if ($newIds.Count -gt 0) {
         Add-AirTableRecord $dogsBaseKey $tableName $pup
     }
 }
+
+$VerbosePreference = $oldPref
